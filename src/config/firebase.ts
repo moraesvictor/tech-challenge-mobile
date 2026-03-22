@@ -1,10 +1,11 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { initializeAuth, type Auth, type Persistence } from 'firebase/auth';
+import { getAuth, initializeAuth, type Auth, type Persistence } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Metro resolves `@firebase/auth` to the React Native build; public `.d.ts` omits this helper.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { getReactNativePersistence } = require('@firebase/auth') as {
   getReactNativePersistence: (storage: typeof AsyncStorage) => Persistence;
 };
@@ -46,9 +47,13 @@ export function getFirebaseApp(): FirebaseApp {
 export function getFirebaseAuth(): Auth {
   if (!auth) {
     const a = getFirebaseApp();
-    auth = initializeAuth(a, {
-      persistence: getReactNativePersistence(AsyncStorage),
-    });
+    try {
+      auth = initializeAuth(a, {
+        persistence: getReactNativePersistence(AsyncStorage),
+      });
+    } catch {
+      auth = getAuth(a);
+    }
   }
   return auth;
 }

@@ -22,7 +22,7 @@ function formatMoney(n: number) {
   return n.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
 }
 
-function TransactionRow({
+const TransactionRow = React.memo(function TransactionRow({
   item,
   onPress,
 }: {
@@ -52,7 +52,7 @@ function TransactionRow({
       </View>
     </Pressable>
   );
-}
+});
 
 export function TransactionsListScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<TabParamList, 'Transactions'>>();
