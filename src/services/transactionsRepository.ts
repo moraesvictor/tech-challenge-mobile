@@ -16,7 +16,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as DocumentPicker from 'expo-document-picker';
-import { getFirestoreDb, getFirebaseStorage } from '../config/firebase';
+import { firestore, storage } from '../config/firebase';
 import type {
   Transaction,
   TransactionFilters,
@@ -28,7 +28,7 @@ const PAGE_SIZE = 20;
 const ANALYTICS_LIMIT = 400;
 
 function transactionsCol(uid: string) {
-  return collection(getFirestoreDb(), 'users', uid, 'transactions');
+  return collection(firestore, 'users', uid, 'transactions');
 }
 
 function buildListConstraints(filters: TransactionFilters): QueryConstraint[] {
@@ -96,7 +96,7 @@ export async function getTransaction(
   uid: string,
   transactionId: string
 ): Promise<Transaction | null> {
-  const dRef = doc(getFirestoreDb(), 'users', uid, 'transactions', transactionId);
+  const dRef = doc(firestore, 'users', uid, 'transactions', transactionId);
   const snap = await getDoc(dRef);
   if (!snap.exists()) {
     return null;
@@ -128,7 +128,7 @@ export async function updateTransactionRecord(
   transactionId: string,
   input: TransactionInput
 ): Promise<void> {
-  const dRef = doc(getFirestoreDb(), 'users', uid, 'transactions', transactionId);
+  const dRef = doc(firestore, 'users', uid, 'transactions', transactionId);
   await updateDoc(dRef, {
     title: input.title.trim(),
     amount: input.amount,
@@ -145,7 +145,6 @@ export async function uploadReceipt(
   transactionId: string,
   file: DocumentPicker.DocumentPickerAsset
 ): Promise<string> {
-  const storage = getFirebaseStorage();
   const name = file.name ?? 'receipt';
   const safeName = name.replace(/[^a-zA-Z0-9._-]/g, '_');
   const path = `receipts/${uid}/${transactionId}/${Date.now()}_${safeName}`;

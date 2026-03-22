@@ -1,7 +1,7 @@
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, initializeAuth, type Auth, type Persistence } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Metro resolves `@firebase/auth` to the React Native build; public `.d.ts` omits this helper.
@@ -10,68 +10,36 @@ const { getReactNativePersistence } = require('@firebase/auth') as {
   getReactNativePersistence: (storage: typeof AsyncStorage) => Persistence;
 };
 
-const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? '',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? '',
-};
+/**
+ * Web app configuration from Firebase Console (personal-finance-manager-1123c).
+ * Firebase Analytics is intentionally not used in this Expo / React Native app.
+ */
+export const firebaseConfig = {
+  apiKey: 'AIzaSyDePGb0xugBXtQY8gd3P3heLT2x4PKWfp8',
+  authDomain: 'personal-finance-manager-1123c.firebaseapp.com',
+  projectId: 'personal-finance-manager-1123c',
+  storageBucket: 'personal-finance-manager-1123c.firebasestorage.app',
+  messagingSenderId: '753651847983',
+  appId: '1:753651847983:web:06b776f0b04a26b19c87da',
+} as const;
 
-function hasConfig(): boolean {
-  return Boolean(
-    firebaseConfig.apiKey &&
-      firebaseConfig.projectId &&
-      firebaseConfig.appId
-  );
+export const app: FirebaseApp =
+  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
+
+let authInstance: Auth;
+try {
+  authInstance = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} catch {
+  authInstance = getAuth(app);
 }
 
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let db: Firestore | null = null;
-let storage: FirebaseStorage | null = null;
+/** Firebase Authentication (email/password, AsyncStorage persistence). */
+export const auth: Auth = authInstance;
 
-export function getFirebaseApp(): FirebaseApp {
-  if (!hasConfig()) {
-    throw new Error(
-      'Firebase is not configured. Copy .env.example to .env and set EXPO_PUBLIC_FIREBASE_* variables.'
-    );
-  }
-  if (!app) {
-    app = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
-  }
-  return app;
-}
+/** Cloud Firestore. */
+export const firestore: Firestore = getFirestore(app);
 
-export function getFirebaseAuth(): Auth {
-  if (!auth) {
-    const a = getFirebaseApp();
-    try {
-      auth = initializeAuth(a, {
-        persistence: getReactNativePersistence(AsyncStorage),
-      });
-    } catch {
-      auth = getAuth(a);
-    }
-  }
-  return auth;
-}
-
-export function getFirestoreDb(): Firestore {
-  if (!db) {
-    db = getFirestore(getFirebaseApp());
-  }
-  return db;
-}
-
-export function getFirebaseStorage(): FirebaseStorage {
-  if (!storage) {
-    storage = getStorage(getFirebaseApp());
-  }
-  return storage;
-}
-
-export function isFirebaseConfigured(): boolean {
-  return hasConfig();
-}
+/** Firebase Storage (receipts). */
+export const storage: FirebaseStorage = getStorage(app);

@@ -14,7 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function AuthScreen() {
-  const { signIn, signUp, authReady } = useAuth();
+  const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,10 +45,6 @@ export function AuthScreen() {
       setError(v);
       return;
     }
-    if (!authReady) {
-      setError('Firebase is not configured. Add EXPO_PUBLIC_FIREBASE_* to .env.');
-      return;
-    }
     setSubmitting(true);
     try {
       if (mode === 'login') {
@@ -62,7 +58,7 @@ export function AuthScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [authReady, email, mode, password, signIn, signUp, validate]);
+  }, [email, mode, password, signIn, signUp, validate]);
 
   return (
     <KeyboardAvoidingView
@@ -74,12 +70,6 @@ export function AuthScreen() {
         <Text style={styles.subtitle}>
           {mode === 'login' ? 'Sign in to continue' : 'Create your account'}
         </Text>
-
-        {!authReady ? (
-          <Text style={styles.warn}>
-            Configure Firebase environment variables (see README) before signing in.
-          </Text>
-        ) : null}
 
         <Text style={styles.label}>Email</Text>
         <TextInput
@@ -160,11 +150,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#94a3b8',
     marginBottom: 20,
-  },
-  warn: {
-    color: '#fbbf24',
-    marginBottom: 12,
-    fontSize: 13,
   },
   label: {
     color: '#cbd5e1',
