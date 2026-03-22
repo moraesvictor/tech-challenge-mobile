@@ -87,7 +87,7 @@ function computeAnalytics(rows: Transaction[]): DashboardAnalytics {
 }
 
 export function TransactionsProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, authReady } = useAuth();
   const uid = user?.uid;
 
   const [filters, setFilters] = useState<TransactionFilters>(defaultFilters);
@@ -113,7 +113,7 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
   );
 
   const loadAnalytics = useCallback(async () => {
-    if (!uid) {
+    if (!uid || !authReady) {
       setAnalyticsRows([]);
       return;
     }
@@ -124,10 +124,10 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [uid]);
+  }, [uid, authReady]);
 
   const loadInitialPage = useCallback(async () => {
-    if (!uid) {
+    if (!uid || !authReady) {
       setTransactions([]);
       setHasMore(false);
       return;
@@ -142,10 +142,10 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
     } finally {
       setListLoading(false);
     }
-  }, [uid, filters]);
+  }, [uid, authReady, filters]);
 
   const loadMore = useCallback(async () => {
-    if (!uid || !hasMore || listLoadingMore || !cursorRef.current) {
+    if (!uid || !authReady || !hasMore || listLoadingMore || !cursorRef.current) {
       return;
     }
     setListLoadingMore(true);
@@ -171,10 +171,10 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
     } finally {
       setListLoadingMore(false);
     }
-  }, [uid, hasMore, listLoadingMore, filters]);
+  }, [uid, authReady, hasMore, listLoadingMore, filters]);
 
   const refreshAll = useCallback(async () => {
-    if (!uid) {
+    if (!uid || !authReady) {
       return;
     }
     setListRefreshing(true);
@@ -183,10 +183,10 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
     } finally {
       setListRefreshing(false);
     }
-  }, [uid, loadInitialPage, loadAnalytics]);
+  }, [uid, authReady, loadInitialPage, loadAnalytics]);
 
   useEffect(() => {
-    if (!uid) {
+    if (!uid || !authReady) {
       setTransactions([]);
       setAnalyticsRows([]);
       cursorRef.current = null;
@@ -195,7 +195,7 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
     }
     loadInitialPage();
     loadAnalytics();
-  }, [uid, filtersKey, loadInitialPage, loadAnalytics]);
+  }, [uid, authReady, filtersKey, loadInitialPage, loadAnalytics]);
 
   const addTransaction = useCallback(
     async (input: TransactionInput) => {

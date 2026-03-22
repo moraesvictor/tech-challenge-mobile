@@ -52,6 +52,8 @@ npm install
 
 ### 5. Add credentials to the app
 
+Firebase is configured only through **`EXPO_PUBLIC_*` variables** in `.env` (see `src/config/firebase.ts`). **Never commit** `.env` or paste API keys into tracked source files.
+
 1. Copy the example env file:
 
    ```bash

@@ -14,7 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function AuthScreen() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, authReady } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +45,10 @@ export function AuthScreen() {
       setError(v);
       return;
     }
+    if (!authReady) {
+      setError('Configure o Firebase: copie .env.example para .env e preencha EXPO_PUBLIC_FIREBASE_*.');
+      return;
+    }
     setSubmitting(true);
     try {
       if (mode === 'login') {
@@ -58,7 +62,7 @@ export function AuthScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [email, mode, password, signIn, signUp, validate]);
+  }, [authReady, email, mode, password, signIn, signUp, validate]);
 
   return (
     <KeyboardAvoidingView
@@ -70,6 +74,13 @@ export function AuthScreen() {
         <Text style={styles.subtitle}>
           {mode === 'login' ? 'Sign in to continue' : 'Create your account'}
         </Text>
+
+        {!authReady ? (
+          <Text style={styles.warn}>
+            Crie um arquivo `.env` na raiz com as variáveis EXPO_PUBLIC_FIREBASE_* (veja
+            .env.example). Reinicie o Expo após alterar.
+          </Text>
+        ) : null}
 
         <Text style={styles.label}>Email</Text>
         <TextInput
@@ -150,6 +161,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#94a3b8',
     marginBottom: 20,
+  },
+  warn: {
+    color: '#fbbf24',
+    marginBottom: 12,
+    fontSize: 13,
   },
   label: {
     color: '#cbd5e1',

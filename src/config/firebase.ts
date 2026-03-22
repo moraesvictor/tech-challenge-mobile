@@ -11,35 +11,68 @@ const { getReactNativePersistence } = require('@firebase/auth') as {
 };
 
 /**
- * Web app configuration from Firebase Console (personal-finance-manager-1123c).
- * Firebase Analytics is intentionally not used in this Expo / React Native app.
+ * Reads Firebase Web SDK config from Expo public env vars.
+ * Do not commit a `.env` file — copy `.env.example` to `.env` locally.
+ * Analytics is not initialized.
  */
-export const firebaseConfig = {
-  apiKey: 'AIzaSyDePGb0xugBXtQY8gd3P3heLT2x4PKWfp8',
-  authDomain: 'personal-finance-manager-1123c.firebaseapp.com',
-  projectId: 'personal-finance-manager-1123c',
-  storageBucket: 'personal-finance-manager-1123c.firebasestorage.app',
-  messagingSenderId: '753651847983',
-  appId: '1:753651847983:web:06b776f0b04a26b19c87da',
-} as const;
-
-export const app: FirebaseApp =
-  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]!;
-
-let authInstance: Auth;
-try {
-  authInstance = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
-  });
-} catch {
-  authInstance = getAuth(app);
+export function getFirebaseConfigFromEnv() {
+  return {
+    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
+    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? '',
+    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+    messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
+    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? '',
+  };
 }
 
-/** Firebase Authentication (email/password, AsyncStorage persistence). */
-export const auth: Auth = authInstance;
+export function isFirebaseConfigured(): boolean {
+  const c = getFirebaseConfigFromEnv();
+  return Boolean(c.apiKey && c.projectId && c.appId);
+}
 
-/** Cloud Firestore. */
-export const firestore: Firestore = getFirestore(app);
+let appInstance: FirebaseApp | null = null;
+let authInstance: Auth | null = null;
+let firestoreInstance: Firestore | null = null;
+let storageInstance: FirebaseStorage | null = null;
 
-/** Firebase Storage (receipts). */
-export const storage: FirebaseStorage = getStorage(app);
+export function getFirebaseApp(): FirebaseApp {
+  if (!isFirebaseConfigured()) {
+    throw new Error(
+      'Firebase is not configured. Copy .env.example to .env and set EXPO_PUBLIC_FIREBASE_* (never commit .env).'
+    );
+  }
+  if (!appInstance) {
+    const cfg = getFirebaseConfigFromEnv();
+    appInstance = getApps().length === 0 ? initializeApp(cfg) : getApps()[0]!;
+  }
+  return appInstance;
+}
+
+export function getFirebaseAuth(): Auth {
+  if (!authInstance) {
+    const a = getFirebaseApp();
+    try {
+      authInstance = initializeAuth(a, {
+        persistence: getReactNativePersistence(AsyncStorage),
+      });
+    } catch {
+      authInstance = getAuth(a);
+    }
+  }
+  return authInstance;
+}
+
+export function getFirestoreDb(): Firestore {
+  if (!firestoreInstance) {
+    firestoreInstance = getFirestore(getFirebaseApp());
+  }
+  return firestoreInstance;
+}
+
+export function getFirebaseStorage(): FirebaseStorage {
+  if (!storageInstance) {
+    storageInstance = getStorage(getFirebaseApp());
+  }
+  return storageInstance;
+}

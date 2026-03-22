@@ -86,7 +86,7 @@ function MainNavigator() {
 }
 
 export function AppNavigator() {
-  const { user, initializing } = useAuth();
+  const { user, initializing, authReady } = useAuth();
 
   if (initializing) {
     return (
@@ -106,7 +106,7 @@ export function AppNavigator() {
   return (
     <NavigationContainer theme={navTheme}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {!user ? (
+        {!authReady || !user ? (
           <RootStack.Screen name="Auth" component={AuthScreen} />
         ) : (
           <RootStack.Screen name="Main" component={MainNavigator} />
