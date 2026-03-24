@@ -83,7 +83,7 @@ export function DashboardScreen() {
   React.useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 20 }}>
           <Pressable
             onPress={() => {
               const stack =
