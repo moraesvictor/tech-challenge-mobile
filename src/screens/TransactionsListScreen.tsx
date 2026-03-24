@@ -82,7 +82,7 @@ export function TransactionsListScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingRight: 20 }}>
           <Pressable onPress={() => setFilterOpen(true)} hitSlop={8}>
             <Text style={{ color: '#2dd4bf', fontWeight: '700' }}>Filter</Text>
           </Pressable>

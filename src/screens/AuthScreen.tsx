@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
@@ -52,8 +53,8 @@ function formatAuthError(err: unknown): string {
 
   if (code === 'auth/account-exists-with-different-credential') {
     return (
-      'Esta conta já está ligada a outro método de login. ' +
-      'Use “Continuar com Google” ou o e-mail/senha que você usou ao criar a conta.'
+      'This account is already linked to another login method. ' +
+      'Use "Continue with Google" or the email/password you used to create the account.'
     );
   }
   if (
@@ -162,7 +163,7 @@ function GoogleSignInBlock({
       {googleBusy ? (
         <ActivityIndicator color="#1e293b" />
       ) : (
-        <Text style={styles.googleBtnText}>Continuar com Google</Text>
+          <Text style={styles.googleBtnText}>Continue with Google</Text>
       )}
     </Pressable>
   );
@@ -304,11 +305,8 @@ export function AuthScreen() {
                 );
               }}
             >
-              <Text style={styles.googleBtnText}>Continuar com Google</Text>
+              <Text style={styles.googleBtnText}>Continue with Google</Text>
             </Pressable>
-            <Text style={styles.hint}>
-              O botão acima fica ativo quando você definir `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (veja `.env.example`).
-            </Text>
           </>
         )}
 

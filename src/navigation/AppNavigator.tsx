@@ -34,7 +34,7 @@ function TabsNavigator() {
       screenOptions={{
         headerStyle: { backgroundColor: '#1e293b' },
         headerTintColor: '#f8fafc',
-        tabBarStyle: { backgroundColor: '#1e293b', borderTopColor: '#334155' },
+        tabBarStyle: { backgroundColor: '#1e293b', borderTopColor: '#334155', height: 80 },
         tabBarActiveTintColor: '#2dd4bf',
         tabBarInactiveTintColor: '#94a3b8',
       }}
