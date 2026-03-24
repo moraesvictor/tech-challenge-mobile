@@ -1,9 +1,17 @@
 rules_version = '2';
+
+// Apenas o usuário autenticado acessa users/{seuUid}/transactions/...
+// Publique no console (Firestore → Regras) ou: firebase deploy --only firestore:rules
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId}/transactions/{transactionId} {
       allow read, create, update, delete: if request.auth != null
         && request.auth.uid == userId;
+    }
+
+    // Todo o restante negado
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

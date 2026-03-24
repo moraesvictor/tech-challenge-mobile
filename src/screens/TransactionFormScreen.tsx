@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -8,7 +8,6 @@ import {
   View,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions } from '../contexts/TransactionsContext';
 import {
@@ -20,7 +19,7 @@ import {
   type TransactionFormState,
 } from '../components/TransactionFormFields';
 import type { MainStackParamList } from '../navigation/types';
-import { getTransaction, uploadReceipt } from '../services/transactionsRepository';
+import { getTransaction } from '../services/transactionsRepository';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'TransactionForm'>;
 
@@ -35,9 +34,6 @@ export function TransactionFormScreen({ navigation, route }: Props) {
   >({});
   const [loading, setLoading] = useState(Boolean(transactionId));
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [pendingReceipt, setPendingReceipt] =
-    useState<DocumentPicker.DocumentPickerAsset | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,46 +60,6 @@ export function TransactionFormScreen({ navigation, route }: Props) {
     };
   }, [transactionId, user?.uid]);
 
-  const receiptNote = useMemo(() => {
-    if (pendingReceipt?.name) {
-      return `Selected: ${pendingReceipt.name} (uploads when you save)`;
-    }
-    if (form.receiptUrl) {
-      return 'Receipt is stored in Firebase Storage and linked to this transaction.';
-    }
-    return null;
-  }, [form.receiptUrl, pendingReceipt]);
-
-  const onReceiptSelected = useCallback(
-    async (asset: DocumentPicker.DocumentPickerAsset) => {
-      if (!user?.uid) {
-        return;
-      }
-      if (!transactionId) {
-        setPendingReceipt(asset);
-        return;
-      }
-      setUploading(true);
-      try {
-        const url = await uploadReceipt(user.uid, transactionId, asset);
-        let next: TransactionFormState | null = null;
-        setForm((prev) => {
-          next = { ...prev, receiptUrl: url };
-          return next;
-        });
-        if (next) {
-          await updateTransaction(transactionId, formStateToInput(next));
-        }
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : 'Upload failed';
-        Alert.alert('Receipt', msg);
-      } finally {
-        setUploading(false);
-      }
-    },
-    [transactionId, updateTransaction, user?.uid]
-  );
-
   const onSave = useCallback(async () => {
     const errors = validateTransactionForm(form);
     setFieldErrors(errors);
@@ -113,16 +69,10 @@ export function TransactionFormScreen({ navigation, route }: Props) {
     const input = formStateToInput(form);
     setSaving(true);
     try {
-      let id = transactionId ?? null;
-      if (!id) {
-        id = await addTransaction(input);
+      if (!transactionId) {
+        await addTransaction(input);
       } else {
-        await updateTransaction(id, input);
-      }
-      if (pendingReceipt && user?.uid && id) {
-        const url = await uploadReceipt(user.uid, id, pendingReceipt);
-        await updateTransaction(id, { ...input, receiptUrl: url });
-        setPendingReceipt(null);
+        await updateTransaction(transactionId, input);
       }
       navigation.goBack();
     } catch (e: unknown) {
@@ -131,15 +81,7 @@ export function TransactionFormScreen({ navigation, route }: Props) {
     } finally {
       setSaving(false);
     }
-  }, [
-    addTransaction,
-    form,
-    navigation,
-    pendingReceipt,
-    transactionId,
-    updateTransaction,
-    user?.uid,
-  ]);
+  }, [addTransaction, form, navigation, transactionId, updateTransaction]);
 
   if (loading) {
     return (
@@ -151,24 +93,12 @@ export function TransactionFormScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.root}>
-      {uploading ? (
-        <View style={styles.uploadBanner}>
-          <ActivityIndicator color="#0f172a" />
-          <Text style={styles.uploadBannerTxt}>Uploading receipt…</Text>
-        </View>
-      ) : null}
-      <TransactionFormFields
-        value={form}
-        onChange={setForm}
-        fieldErrors={fieldErrors}
-        onReceiptSelected={onReceiptSelected}
-        receiptNote={receiptNote}
-      />
+      <TransactionFormFields value={form} onChange={setForm} fieldErrors={fieldErrors} />
       <View style={styles.footer}>
         <Pressable
-          style={[styles.saveBtn, (saving || uploading) && styles.btnDisabled]}
+          style={[styles.saveBtn, saving && styles.btnDisabled]}
           onPress={onSave}
-          disabled={saving || uploading}
+          disabled={saving}
         >
           {saving ? (
             <ActivityIndicator color="#0f172a" />
@@ -189,15 +119,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#0f172a',
   },
-  uploadBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    backgroundColor: '#2dd4bf',
-  },
-  uploadBannerTxt: { color: '#0f172a', fontWeight: '600' },
   footer: {
     padding: 16,
     borderTopWidth: 1,

@@ -11,7 +11,6 @@ import {
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import * as DocumentPicker from 'expo-document-picker';
 import { TRANSACTION_CATEGORIES } from '../constants/categories';
 import type { Transaction, TransactionInput, TransactionType } from '../types/transaction';
 
@@ -21,7 +20,6 @@ export type TransactionFormState = {
   category: string;
   date: Date;
   type: TransactionType;
-  receiptUrl: string | null;
 };
 
 const defaultDate = () => {
@@ -37,7 +35,6 @@ export function emptyFormState(): TransactionFormState {
     category: '',
     date: defaultDate(),
     type: 'expense',
-    receiptUrl: null,
   };
 }
 
@@ -48,7 +45,6 @@ export function stateFromTransaction(t: Transaction): TransactionFormState {
     category: t.category,
     date: new Date(t.date),
     type: t.type,
-    receiptUrl: t.receiptUrl,
   };
 }
 
@@ -85,7 +81,7 @@ export function formStateToInput(state: TransactionFormState): TransactionInput 
     category: state.category.trim(),
     date: state.date,
     type: state.type,
-    receiptUrl: state.receiptUrl,
+    receiptUrl: null,
   };
 }
 
@@ -93,17 +89,9 @@ type Props = {
   value: TransactionFormState;
   onChange: (next: TransactionFormState) => void;
   fieldErrors: FieldErrors;
-  onReceiptSelected: (asset: DocumentPicker.DocumentPickerAsset) => void;
-  receiptNote?: string | null;
 };
 
-export function TransactionFormFields({
-  value,
-  onChange,
-  fieldErrors,
-  onReceiptSelected,
-  receiptNote,
-}: Props) {
+export function TransactionFormFields({ value, onChange, fieldErrors }: Props) {
   const [showDate, setShowDate] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
 
@@ -120,17 +108,6 @@ export function TransactionFormFields({
   const categoryLabel = useMemo(() => {
     return value.category || 'Select category';
   }, [value.category]);
-
-  const pickFile = useCallback(async () => {
-    const res = await DocumentPicker.getDocumentAsync({
-      copyToCacheDirectory: true,
-      multiple: false,
-    });
-    if (res.canceled || !res.assets?.[0]) {
-      return;
-    }
-    onReceiptSelected(res.assets[0]);
-  }, [onReceiptSelected]);
 
   return (
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -186,18 +163,6 @@ export function TransactionFormFields({
 
       {showDate ? (
         <DateTimePicker value={value.date} mode="date" onChange={onDateChange} />
-      ) : null}
-
-      <Text style={styles.label}>Receipt (optional)</Text>
-      <Pressable style={styles.secondaryBtn} onPress={pickFile}>
-        <Text style={styles.secondaryBtnText}>
-          {value.receiptUrl ? 'Replace receipt' : 'Attach receipt'}
-        </Text>
-      </Pressable>
-      {receiptNote ? (
-        <Text style={styles.hint} numberOfLines={2}>
-          {receiptNote}
-        </Text>
       ) : null}
 
       <Modal visible={catOpen} transparent animationType="fade">
@@ -270,17 +235,6 @@ const styles = StyleSheet.create({
   },
   chipText: { color: '#94a3b8', fontWeight: '600' },
   chipTextOn: { color: '#ccfbf1' },
-  secondaryBtn: {
-    marginTop: 6,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#475569',
-    alignItems: 'center',
-  },
-  btnDisabled: { opacity: 0.6 },
-  secondaryBtnText: { color: '#e2e8f0', fontWeight: '600' },
-  hint: { color: '#64748b', fontSize: 12, marginTop: 6 },
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.55)',
