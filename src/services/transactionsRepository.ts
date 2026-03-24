@@ -14,9 +14,7 @@ import {
   type QueryConstraint,
   Timestamp,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import * as DocumentPicker from 'expo-document-picker';
-import { getFirestoreDb, getFirebaseStorage } from '../config/firebase';
+import { getFirestoreDb } from '../config/firebase';
 import type {
   Transaction,
   TransactionFilters,
@@ -138,22 +136,6 @@ export async function updateTransactionRecord(
     receiptUrl: input.receiptUrl ?? null,
     updatedAt: Timestamp.now(),
   });
-}
-
-export async function uploadReceipt(
-  uid: string,
-  transactionId: string,
-  file: DocumentPicker.DocumentPickerAsset
-): Promise<string> {
-  const name = file.name ?? 'receipt';
-  const safeName = name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const path = `receipts/${uid}/${transactionId}/${Date.now()}_${safeName}`;
-  const storageRef = ref(getFirebaseStorage(), path);
-
-  const res = await fetch(file.uri);
-  const blob = await res.blob();
-  await uploadBytes(storageRef, blob, { contentType: file.mimeType ?? undefined });
-  return getDownloadURL(storageRef);
 }
 
 export { PAGE_SIZE };

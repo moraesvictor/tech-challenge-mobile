@@ -1,7 +1,13 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getAuth, initializeAuth, type Auth, type Persistence } from 'firebase/auth';
+import {
+  browserLocalPersistence,
+  getAuth,
+  initializeAuth,
+  type Auth,
+  type Persistence,
+} from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
-import { getStorage, type FirebaseStorage } from 'firebase/storage';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Metro resolves `@firebase/auth` to the React Native build; public `.d.ts` omits this helper.
@@ -12,8 +18,7 @@ const { getReactNativePersistence } = require('@firebase/auth') as {
 
 /**
  * Reads Firebase Web SDK config from Expo public env vars.
- * Do not commit a `.env` file — copy `.env.example` to `.env` locally.
- * Analytics is not initialized.
+ * Firebase Storage is not used (no file uploads); `storageBucket` is optional for Auth/Firestore.
  */
 export function getFirebaseConfigFromEnv() {
   return {
@@ -34,7 +39,6 @@ export function isFirebaseConfigured(): boolean {
 let appInstance: FirebaseApp | null = null;
 let authInstance: Auth | null = null;
 let firestoreInstance: Firestore | null = null;
-let storageInstance: FirebaseStorage | null = null;
 
 export function getFirebaseApp(): FirebaseApp {
   if (!isFirebaseConfigured()) {
@@ -52,12 +56,20 @@ export function getFirebaseApp(): FirebaseApp {
 export function getFirebaseAuth(): Auth {
   if (!authInstance) {
     const a = getFirebaseApp();
-    try {
-      authInstance = initializeAuth(a, {
-        persistence: getReactNativePersistence(AsyncStorage),
-      });
-    } catch {
-      authInstance = getAuth(a);
+    if (Platform.OS === 'web') {
+      try {
+        authInstance = initializeAuth(a, { persistence: browserLocalPersistence });
+      } catch {
+        authInstance = getAuth(a);
+      }
+    } else {
+      try {
+        authInstance = initializeAuth(a, {
+          persistence: getReactNativePersistence(AsyncStorage),
+        });
+      } catch {
+        authInstance = getAuth(a);
+      }
     }
   }
   return authInstance;
@@ -68,11 +80,4 @@ export function getFirestoreDb(): Firestore {
     firestoreInstance = getFirestore(getFirebaseApp());
   }
   return firestoreInstance;
-}
-
-export function getFirebaseStorage(): FirebaseStorage {
-  if (!storageInstance) {
-    storageInstance = getStorage(getFirebaseApp());
-  }
-  return storageInstance;
 }
